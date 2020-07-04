@@ -1,0 +1,12 @@
+[report]
+show_missing = True
+fail_under = 85
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:
+    def __repr__
+omit =
+    plant_wn/web/manage.py
+    plant_wn/web/wsgi.py
+    plant_wn/web/config.py
+    plant_wn/web/migrations*

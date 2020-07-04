@@ -127,3 +127,11 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# App specific
+plant_wn.db
+plant_wn_test.db
+
+
+# IDE
+.vscode/
