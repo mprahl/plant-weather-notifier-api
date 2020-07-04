@@ -7,3 +7,7 @@ class AppError(Exception):
 
 class ValidationError(AppError):
     """An exception for invalid input."""
+
+
+class WeatherAPIError(AppError):
+    """An exception when there is an error in the weather API."""
