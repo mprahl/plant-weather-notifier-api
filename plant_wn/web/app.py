@@ -23,9 +23,9 @@ def load_config(app):  # pragma: no cover
     """
     config_file = None
     if os.getenv("PLANT_WN_DEV", "").lower() == "true":
-        default_config_obj = "plant_wn.config.DevelopmentConfig"
+        default_config_obj = "plant_wn.web.config.DevelopmentConfig"
     else:
-        default_config_obj = "plant_wn.config.ProductionConfig"
+        default_config_obj = "plant_wn.web.config.ProductionConfig"
         config_file = "/etc/plant_wn/settings.py"
     app.config.from_object(default_config_obj)
 
