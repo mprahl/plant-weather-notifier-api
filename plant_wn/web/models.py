@@ -22,12 +22,6 @@ class MaxPrecipitation(db.Model, Threshold):
     __tablename__ = "max_precipitations"
 
 
-class MinTemp(db.Model, Threshold):
-    """A minimum temperature threshold."""
-
-    __tablename__ = "min_temps"
-
-
 class MaxTemp(db.Model, Threshold):
     """A maximum temperature threshold."""
 
@@ -38,6 +32,12 @@ class MaxWind(db.Model, Threshold):
     """A maximum temperature threshold."""
 
     __tablename__ = "max_winds"
+
+
+class MinTemp(db.Model, Threshold):
+    """A minimum temperature threshold."""
+
+    __tablename__ = "min_temps"
 
 
 class Plant(db.Model):
@@ -56,8 +56,8 @@ class Plant(db.Model):
 
     max_precipitation = sqlalchemy.orm.relationship("MaxPrecipitation", uselist=False)
     max_temp = sqlalchemy.orm.relationship("MaxTemp", uselist=False)
-    min_temp = sqlalchemy.orm.relationship("MinTemp", uselist=False)
     max_wind = sqlalchemy.orm.relationship("MaxWind", uselist=False)
+    min_temp = sqlalchemy.orm.relationship("MinTemp", uselist=False)
     user = sqlalchemy.orm.relationship("User", back_populates="plants")
     zip_code = sqlalchemy.orm.relationship("ZipCode", uselist=False)
 
