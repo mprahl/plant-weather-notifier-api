@@ -4,10 +4,11 @@ import os
 
 from flask import Flask, jsonify
 from flask.logging import default_handler
+from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 from werkzeug.exceptions import default_exceptions, HTTPException
 
-from plant_wn.exceptions import AppError, ValidationError
+from plant_wn.exceptions import AppError, ConfigError, ValidationError
 from plant_wn.web import db
 from plant_wn.web.api_v1 import api_v1
 
@@ -22,7 +23,7 @@ def load_config(app):  # pragma: no cover
     :param flask.Flask app: a Flask application object
     """
     config_file = None
-    if os.getenv("PLANT_WN_DEV", "").lower() == "true":
+    if app.config["ENV"] == "development":
         default_config_obj = "plant_wn.web.config.DevelopmentConfig"
     else:
         default_config_obj = "plant_wn.web.config.ProductionConfig"
@@ -40,7 +41,8 @@ def validate_api_config(config):
     :param dict config: the dict containing the plant_wn config
     :raises ConfigError: if the config is invalid
     """
-    pass
+    if config["ENV"] != "development" and config["SECRET_KEY"] == "change-me":
+        raise ConfigError("SECRET_KEY cannot use the default value in production")
 
 
 def create_app(config_obj=None):  # pragma: no cover
@@ -52,14 +54,13 @@ def create_app(config_obj=None):  # pragma: no cover
     :return: a Flask application object
     :rtype: flask.Flask
     """
-    app = Flask(__name__)
+    app = Flask("plant_wn")
     if config_obj:
         app.config.from_object(config_obj)
     else:
         load_config(app)
-
-    # Validate the config
-    validate_api_config(app.config)
+        # Validate the config
+        validate_api_config(app.config)
 
     # Configure logging
     default_handler.setFormatter(
@@ -77,6 +78,8 @@ def create_app(config_obj=None):  # pragma: no cover
     # Initialize the database migrations
     migrations_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "migrations")
     Migrate(app, db, directory=migrations_dir)
+    # Initialize JSON web token support
+    JWTManager(app)
 
     app.register_blueprint(api_v1, url_prefix="/api/v1")
     for code in default_exceptions.keys():

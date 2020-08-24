@@ -9,11 +9,15 @@ TEST_DB_FILE = os.path.join(BASE_DIR, "plant_wn_test.db")
 class Config(object):
     """The base plant_wn Flask configuration."""
 
+    JWT_ERROR_MESSAGE_KEY = "error"
+    # Claim in the tokens that is used as the source of identity. sub is used due to the JWT RFC.
+    JWT_IDENTITY_CLAIM = "sub"
     # Additional loggers to set to the level defined in PLANT_WN_LOG_LEVEL
     PLANT_WN_ADDITIONAL_LOGGERS = []
     PLANT_WN_LOG_FORMAT = "%(asctime)s %(name)s %(levelname)s %(module)s.%(funcName)s %(message)s"
     # This sets the level of the "flask.app" logger, which is accessed from current_app.logger
     PLANT_WN_LOG_LEVEL = "INFO"
+    SECRET_KEY = "change-me"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 

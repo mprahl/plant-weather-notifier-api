@@ -1,7 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
+import bcrypt
 import sqlalchemy
 import sqlalchemy.orm
+from werkzeug.exceptions import Unauthorized
 
+from plant_wn.exceptions import ValidationError
 from plant_wn.web import db
 
 
@@ -67,6 +70,64 @@ class User(db.Model):
     plants = sqlalchemy.orm.relationship("Plant", back_populates="user")
     username = sqlalchemy.Column(sqlalchemy.String, nullable=False, index=True, unique=True)
     password = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+
+    @staticmethod
+    def from_json(json_input):
+        """
+        Convert the JSON object to a User object.
+
+        :param dict json_input: the JSON input representing the User object
+        :return: the User object based on the JSON input
+        :rtype: User
+        :raises ValidationError: if the input is invalid or the user already exists
+        """
+        User.validate_json(json_input)
+
+        if db.session.query(User).filter_by(username=json_input["username"]).count():
+            raise ValidationError(f'The user "{json_input["username"]}" already exists')
+
+        password = bcrypt.hashpw(json_input["password"].encode("utf-8"), bcrypt.gensalt())
+        return User(password=password, username=json_input["username"])
+
+    def to_json(self):
+        """
+        Serialize the User object.
+
+        :return: the JSON object representing the user
+        :rtype: dict
+        """
+        return {"username": self.username}
+
+    @staticmethod
+    def validate_json(json_input):
+        """
+        Validate the input JSON.
+
+        :param dict json_input: the JSON input representing the User object
+        :raises ValidationError: if the input is invalid
+        """
+        invalid_exception = ValidationError(
+            "The input JSON must only contain the following keys with string values: password and "
+            "username"
+        )
+        if not isinstance(json_input, dict):
+            raise invalid_exception
+        elif json_input.keys() != {"password", "username"}:
+            raise invalid_exception
+
+        for value in json_input.values():
+            if not isinstance(value, str):
+                raise invalid_exception
+
+    def validate_password(self, input_password):
+        """
+        Validate the input password.
+
+        :param str input_password: the password provided by the user
+        :raises werkzeug.exceptions.Unauthorized: if the password is incorrect
+        """
+        if not bcrypt.checkpw(input_password.encode("utf-8"), self.password):
+            raise Unauthorized("The username or password was incorrect. Please try again.")
 
 
 class ZipCode(db.Model):
