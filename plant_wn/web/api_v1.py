@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import flask
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
+from sqlalchemy.orm import joinedload
 from sqlalchemy.sql import text
-from werkzeug.exceptions import Unauthorized
+from werkzeug.exceptions import NotFound, Unauthorized
 
 from plant_wn.web import models
 from plant_wn.web.app import db
@@ -19,7 +20,25 @@ def get_plants():
 
     :rtype: flask.Response
     """
-    return flask.jsonify([])
+    username = get_jwt_identity()
+    user_id = db.session.query(models.User.id).filter_by(username=username).scalar()
+    if not user_id:
+        raise NotFound()
+
+    plants = (
+        db.session.query(models.Plant)
+        .filter_by(user_id=user_id)
+        .options(
+            joinedload(models.Plant.max_precipitation),
+            joinedload(models.Plant.max_temp),
+            joinedload(models.Plant.min_temp),
+            joinedload(models.Plant.max_wind),
+            joinedload(models.Plant.zip_code),
+        )
+        .order_by(models.Plant.name)
+        .all()
+    )
+    return flask.jsonify({"items": [plant.to_json() for plant in plants]})
 
 
 @api_v1.route("/healthcheck")

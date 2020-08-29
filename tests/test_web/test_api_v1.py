@@ -2,20 +2,66 @@
 from unittest import mock
 
 import bcrypt
+from flask_jwt_extended import create_access_token
 import pytest
 
 from plant_wn.web import models
 
 
-def test_get_plants(client, user_token):
+def test_get_plants(client, db, user, user_token):
+    zip_code = models.ZipCode(zip_code="27601")
+    plant = models.Plant(
+        max_precipitation=models.MaxPrecipitation(value=2.3),
+        max_temp=models.MaxTemp(value=97.5),
+        max_wind=models.MaxWind(value=17.8),
+        min_temp=models.MinTemp(value=55.0),
+        name="First Plumeria",
+        user=user,
+        zip_code=zip_code,
+    )
+    db.session.add(plant)
+    plant_two = models.Plant(
+        min_temp=models.MinTemp(value=15.0), name="Venus Flytrap", user=user, zip_code=zip_code
+    )
+    db.session.add(plant_two)
+    db.session.commit()
     rv = client.get("/api/v1/plants", headers={"Authorization": f"Bearer {user_token}"})
     assert rv.status_code == 200
-    assert rv.json == []
+    expected = {
+        "items": [
+            {
+                "id": 1,
+                "max_precipitation": {"enabled": True, "id": 1, "value": 2.3},
+                "max_temp": {"enabled": True, "id": 1, "value": 97.5},
+                "max_wind": {"enabled": True, "id": 1, "value": 17.8},
+                "min_temp": {"enabled": True, "id": 1, "value": 55.0},
+                "name": "First Plumeria",
+                "zip_code": "27601",
+            },
+            {
+                "id": 2,
+                "max_precipitation": None,
+                "max_temp": None,
+                "max_wind": None,
+                "min_temp": {"enabled": True, "id": 2, "value": 15.0},
+                "name": "Venus Flytrap",
+                "zip_code": "27601",
+            },
+        ]
+    }
+    assert rv.json == expected
 
 
 def test_get_plants_unauthorized(client, user_token):
     rv = client.get("/api/v1/plants", headers={"Authorization": "Bearer ursine"})
     assert rv.status_code != 200
+
+
+def test_get_plants_user_not_found(client, db):
+    user_token = create_access_token(identity="yoda")
+    rv = client.get("/api/v1/plants", headers={"Authorization": f"Bearer {user_token}"})
+    assert rv.status_code == 404
+    assert rv.json == {"error": "The requested resource was not found"}
 
 
 def test_healthcheck(client):

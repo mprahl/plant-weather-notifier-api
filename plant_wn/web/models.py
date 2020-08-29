@@ -12,8 +12,21 @@ class Threshold:
     """A base class for a threshold."""
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
-    enabled = sqlalchemy.Column(sqlalchemy.Boolean, nullable=False)
+    enabled = sqlalchemy.Column(sqlalchemy.Boolean, default=True, nullable=False)
     value = sqlalchemy.Column(sqlalchemy.Float, nullable=False)
+
+    def to_json(self):
+        """
+        Serialize the Threshold object.
+
+        :return: the JSON object representing the Threshold object
+        :rtype: dict
+        """
+        return {
+            "enabled": self.enabled,
+            "id": self.id,
+            "value": self.value,
+        }
 
 
 class MaxPrecipitation(db.Model, Threshold):
@@ -51,8 +64,9 @@ class Plant(db.Model):
     max_temp_id = sqlalchemy.Column(sqlalchemy.ForeignKey("max_temps.id"), nullable=True)
     min_temp_id = sqlalchemy.Column(sqlalchemy.ForeignKey("min_temps.id"), nullable=True)
     max_wind_id = sqlalchemy.Column(sqlalchemy.ForeignKey("max_winds.id"), nullable=True)
-    user_id = sqlalchemy.Column(sqlalchemy.ForeignKey("users.id"))
-    zip_code_id = sqlalchemy.Column(sqlalchemy.ForeignKey("zip_codes.id"), nullable=True)
+    name = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+    user_id = sqlalchemy.Column(sqlalchemy.ForeignKey("users.id"), nullable=False)
+    zip_code_id = sqlalchemy.Column(sqlalchemy.ForeignKey("zip_codes.id"), nullable=False)
 
     max_precipitation = sqlalchemy.orm.relationship("MaxPrecipitation", uselist=False)
     max_temp = sqlalchemy.orm.relationship("MaxTemp", uselist=False)
@@ -60,6 +74,29 @@ class Plant(db.Model):
     min_temp = sqlalchemy.orm.relationship("MinTemp", uselist=False)
     user = sqlalchemy.orm.relationship("User", back_populates="plants")
     zip_code = sqlalchemy.orm.relationship("ZipCode", uselist=False)
+
+    def to_json(self):
+        """
+        Serialize the Plant object.
+
+        :return: the JSON object representing the plant
+        :rtype: dict
+        """
+        rv = {
+            "id": self.id,
+            "name": self.name,
+            "zip_code": self.zip_code.zip_code
+        }
+        # Add all the thresholds to the JSON object
+        for attr in dir(self):
+            if (attr.startswith("min_") or attr.startswith("max_")) and not attr.endswith("_id"):
+                threshold_name = attr
+                if getattr(self, threshold_name):
+                    rv[threshold_name] = getattr(self, threshold_name).to_json()
+                else:
+                    rv[threshold_name] = None
+
+        return rv
 
 
 class User(db.Model):
