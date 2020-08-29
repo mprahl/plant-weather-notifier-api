@@ -32,16 +32,12 @@ class ClimaCellAPI(BaseWeatherAPI):
             try:
                 rv = self.session.get(url, headers=headers, params=query_params, timeout=30)
             except RequestException:
-                msg = "Failed to get the daily forecast from the ClimaCell API"
                 log.exception(msg)
                 raise WeatherAPIError(msg)
 
             if not rv.ok:
                 log.exception(
-                    "Failed to get the daily forecast from the ClimaCell API. The status code "
-                    "was %d. The text was %s.",
-                    rv.status_code,
-                    rv.text,
+                    "%s. The status code was %d. The text was %s.", msg, rv.status_code, rv.text,
                 )
                 raise WeatherAPIError(msg)
 
