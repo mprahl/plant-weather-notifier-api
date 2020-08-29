@@ -36,7 +36,7 @@ class ClimaCellAPI(BaseWeatherAPI):
                 raise WeatherAPIError(msg)
 
             if not rv.ok:
-                log.exception(
+                log.error(
                     "%s. The status code was %d. The text was %s.", msg, rv.status_code, rv.text,
                 )
                 raise WeatherAPIError(msg)
