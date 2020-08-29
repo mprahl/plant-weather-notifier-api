@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import abc
 
-from plant_wn.weather.requests_utils import get_requests_session
+from plant_wn.requests_utils import get_requests_session
 
 
 class BaseWeatherAPI(abc.ABC):
