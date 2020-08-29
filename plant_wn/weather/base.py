@@ -9,7 +9,7 @@ class BaseWeatherAPI(abc.ABC):
 
     def __init__(self, coordinates, api_key=None):
         """
-        Initialize the WeatherAPI subclass.
+        Initialize the BaseWeatherAPI subclass.
 
         :param tuple(float, float) coordinates: a tuple where the first value is the longitude
             and the second value is the latitude.
